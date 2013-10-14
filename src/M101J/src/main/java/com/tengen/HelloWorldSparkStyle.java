@@ -14,9 +14,22 @@ public class HelloWorldSparkStyle {
     public static void main(String[] args) {
         get(new Route("/") {
             @Override
-            public Object handle(Request request,
-                                 Response response) {
+            public Object handle(Request request, Response response) {
                 return "Hello World from Spark";
+            }
+        });
+
+        get(new Route("/test") {
+            @Override
+            public Object handle(Request request, Response response) {
+                return "This is a test page";
+            }
+        });
+
+        get(new Route("/echo/:thing") {
+            @Override
+            public Object handle(Request request, Response response) {
+                return request.params(":thing");
             }
         });
     }
