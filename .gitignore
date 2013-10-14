@@ -1,0 +1,11 @@
+# Intellij
+src/M101J/.idea/
+src/M101J/*.iml
+src/M101J/*.iws
+
+# Mac
+.DS_Store
+
+# Maven
+src/M101J/log/
+src/M101J/target/
