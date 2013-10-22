@@ -2,6 +2,9 @@
 src/M101J/.idea/
 src/M101J/*.iml
 src/M101J/*.iws
+src/M101JTest/.idea/
+src/M101JTest/*.iml
+src/M101JTest/*.iws
 
 # Mac
 .DS_Store
@@ -9,3 +12,5 @@ src/M101J/*.iws
 # Maven
 src/M101J/log/
 src/M101J/target/
+src/M101JTest/log/
+src/M101JTest/target/
