@@ -23,11 +23,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.WriteResult;
-import com.sun.org.apache.bcel.internal.generic.ACONST_NULL;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 public class BlogPostDAO {
@@ -37,32 +33,36 @@ public class BlogPostDAO {
         postsCollection = blogDatabase.getCollection("posts");
     }
 
-    // Return a single post corresponding to a permalink
     public DBObject findByPermalink(String permalink) {
-
-        DBObject post = null;
-        // XXX HW 3.2,  Work Here
-        post = postsCollection.findOne(new BasicDBObject("permalink", permalink));
-
+        DBObject post = postsCollection.findOne(new BasicDBObject("permalink", permalink));
 
 
         return post;
     }
 
-    // Return a list of posts in descending order. Limit determines
-    // how many posts are returned.
     public List<DBObject> findByDateDescending(int limit) {
-
-        List<DBObject> posts = null;
-        // XXX HW 3.2,  Work Here
-        // Return a list of DBObjects, each one a post from the posts collection
-        posts = postsCollection.find().sort(new BasicDBObject("date", -1)).limit(limit).toArray();
-
-
-
+        List<DBObject> posts;
+        DBCursor cursor = postsCollection.find().sort(new BasicDBObject().append("date", -1)).limit(limit);
+        try {
+            posts = cursor.toArray();
+        } finally {
+            cursor.close();
+        }
         return posts;
     }
 
+    public List<DBObject> findByTagDateDescending(final String tag) {
+        List<DBObject> posts;
+        BasicDBObject query = new BasicDBObject("tags", tag);
+        System.out.println("/tag query: " + query.toString());
+        DBCursor cursor = postsCollection.find(query).sort(new BasicDBObject().append("date", -1)).limit(10);
+        try {
+            posts = cursor.toArray();
+        } finally {
+            cursor.close();
+        }
+        return posts;
+    }
 
     public String addPost(String title, String body, List tags, String username) {
 
@@ -72,72 +72,33 @@ public class BlogPostDAO {
         permalink = permalink.replaceAll("\\W", ""); // get rid of non alphanumeric
         permalink = permalink.toLowerCase();
 
+        BasicDBObject post = new BasicDBObject("title", title);
+        post.append("author", username);
+        post.append("body", body);
+        post.append("permalink", permalink);
+        post.append("tags", tags);
+        post.append("comments", new java.util.ArrayList());
+        post.append("date", new java.util.Date());
 
-        BasicDBObject post = new BasicDBObject();
-        // XXX HW 3.2, Work Here
-        // Remember that a valid post has the following keys:
-        // author, body, permalink, tags, comments, date
-        //
-        // A few hints:
-        // - Don't forget to create an empty list of comments
-        // - for the value of the date key, today's datetime is fine.
-        // - tags are already in list form that implements suitable interface.
-        // - we created the permalink for you above.
-
-        // Build the post object and insert it
-
-        post.append("title", title)
-            .append("author", username)
-            .append("body", body)
-            .append("permalink", permalink)
-            .append("tags", tags)
-            .append("comments", new ArrayList<BasicDBObject>())
-            .append("date", new Date());
-
-        postsCollection.insert(post);
+        try {
+            postsCollection.insert(post);
+            System.out.println("Inserting blog post with permalink " + permalink);
+        } catch (Exception e) {
+            System.out.println("Error inserting post");
+            return null;
+        }
 
         return permalink;
     }
 
-
-
-
-   // White space to protect the innocent
-
-
-
-
-
-
-
-
-    // Append a comment to a blog post
-    public void addPostComment(final String name, final String email, final String body,
-                               final String permalink) {
-
-        // XXX HW 3.3, Work Here
-        // Hints:
-        // - email is optional and may come in NULL. Check for that.
-        // - best solution uses an update command to the database and a suitable
-        //   operator to append the comment on to any existing list of comments
-        /*BasicDBObject comment = new BasicDBObject("author", name)
-                                        .append("body", body);
-        if (!email.isEmpty()) {
+    public void addPostComment(final String name, final String email, final String body, final String permalink) {
+        BasicDBObject comment = new BasicDBObject("author", name).append("body", body);
+        if (email != null && !email.equals("")) {
             comment.append("email", email);
-
         }
 
-        System.out.println(comment);
-
-        DBObject doc = postsCollection.findAndModify(
-                new BasicDBObject("permalink", permalink), null, null, false,
-                new BasicDBObject("$push", new BasicDBObject("comments", comment)),
-                true, false);
-        */
-        DBObject comment=new BasicDBObject("comments",new BasicDBObject("author",name).append("body", body).append("email", email));
-        DBObject updateQuery=new BasicDBObject("$push",comment);
-        postsCollection.update(new BasicDBObject("permalink",permalink), updateQuery);
+        WriteResult result = postsCollection.update(new BasicDBObject("permalink", permalink),
+                new BasicDBObject("$push", new BasicDBObject("comments", comment)), false, false);
     }
-
 
 }
